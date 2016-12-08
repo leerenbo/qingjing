@@ -1,0 +1,85 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xmlns:aop="http://www.springframework.org/schema/aop" xmlns:task="http://www.springframework.org/schema/task" xmlns:tx="http://www.springframework.org/schema/tx" xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="${db.driverClass}"></property>
+		<property name="jdbcUrl" value="${db.url}"></property>
+		<property name="user" value="${db.user}" />
+		<property name="password" value="${db.password}" />
+		<property name="minPoolSize" value="2" />
+		<property name="maxPoolSize" value="100" />
+		<property name="maxIdleTime" value="1800" />
+		<property name="acquireIncrement" value="3" />
+		<property name="maxStatements" value="1000" />
+		<property name="initialPoolSize" value="10" />
+		<property name="idleConnectionTestPeriod" value="60" />
+		<property name="acquireRetryAttempts" value="30" />
+		<property name="breakAfterAcquireFailure" value="true" />
+		<property name="testConnectionOnCheckout" value="false" />
+	</bean>
+
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="entityInterceptor" ref="baseEntityInterceptor" />
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>com.lrb.saas.core.model</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<value>
+				<!-- 设置数据库方言 -->
+				hibernate.dialect=org.hibernate.dialect.MySQLDialect
+				<!-- 设置自动创建create|更新update|验证数据库表结构 -->
+				hibernate.hbm2ddl.auto=update
+				<!-- 输出SQL语句到控制台 -->
+				hibernate.show_sql=true
+				<!-- 格式化输出到控制台的SQL语句 -->
+				hibernate.format_sql=false
+				<!-- 是否开启二级缓存 -->
+				hibernate.cache.use_second_level_cache=false
+				<!-- 配置二级缓存产品 hibernate.cache.provider_class=org.hibernate.cache.EhCach eProvider -->
+				<!-- 是否开启查询缓存 -->
+				hibernate.cache.use_query_cache=false
+				<!-- 数据库批量查询数 -->
+				hibernate.jdbc.fetch_size=50
+				<!-- 数据库批量更新数 -->
+				hibernate.jdbc.batch_size=30
+				hibernate.autoReconnect=true
+				<!-- 数据库表空间 hibernate.default_schema=lrbsoa -->
+			</value>
+		</property>
+	</bean>
+
+	<!-- 配置事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- 使用注解方式定义事务 -->
+	<tx:annotation-driven proxy-target-class="true" transaction-manager="transactionManager" order="102" />
+
+	<!-- 配置事务传播特性 -->
+	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="persist*" propagation="REQUIRED" />
+			<tx:method name="merge*" propagation="REQUIRED" />
+			<tx:method name="execute*" propagation="REQUIRED" />
+			<tx:method name="modify*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="get*" read-only="true" propagation="REQUIRED" />
+			<tx:method name="query*" read-only="true" propagation="REQUIRED" />
+			<tx:method name="find*" read-only="true" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 配置哪些类的哪些方法参与事务 -->
+	<aop:config>
+		<aop:advisor pointcut="execution(* com.lrb.saas..service..*.*(..))" advice-ref="transactionAdvice" order="100" />
+	</aop:config>
+</beans>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util" xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+
+	<bean id="handlerMapping" class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="openidInterceptor"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="webBindingInitializer" ref="webBindingInitializer" />
+
+		<property name="messageConverters">
+			<util:list id="beanList">
+				<ref bean="fastJsonHttpMessageConverter4" />
+				<ref bean="stringHttpMessageConverter" />
+			</util:list>
+		</property>
+	</bean>
+	<bean id="stringHttpMessageConverter" class="org.springframework.http.converter.StringHttpMessageConverter" />
+
+	<bean id="webBindingInitializer" class="org.springframework.web.bind.support.ConfigurableWebBindingInitializer">
+		<property name="validator" ref="validator" />
+		<property name="conversionService" ref="conversionService" />
+	</bean>
+
+	<bean id="exceptionResolver" class="com.lrb.saas.framework.spring.mvc.SAASServiceExceptionResolver"></bean>
+
+	<bean id="fastJsonConfig" class="com.alibaba.fastjson.support.config.FastJsonConfig">
+		<!-- Default charset -->
+		<property name="charset" value="UTF-8" />
+		<!-- Default dateFormat -->
+		<property name="dateFormat" value="yyyy-MM-dd HH:mm:ss" />
+
+		<!-- Feature <property name="features"> <list> <value>Your feature</value> </list> </property> SerializerFeature <property name="serializerFeatures"> <list> <value>Your serializer feature</value> </list> </property> Class Level SerializeFilter <property name="classSerializeFilters"> <map> <entry key="Your filter class" value-ref="Your serializer filter" /> </map> </property> -->
+
+		<!-- Global SerializeFilter -->
+		<property name="serializeFilters">
+			<list>
+				<bean class="com.lrb.saas.framework.fastjson.ResponseHibernateFilter" />
+				<bean class="com.lrb.saas.framework.fastjson.DeletedFilter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean name="fastJsonHttpMessageConverter4" class="com.lrb.saas.framework.fastjson.SAASFastJsonHttpMessageConverter4">
+		<!-- MediaTypes -->
+		<property name="supportedMediaTypes">
+			<list>
+				<value>application/json</value>
+			</list>
+		</property>
+		<!-- FastJsonConfig -->
+		<property name="fastJsonConfig" ref="fastJsonConfig" />
+	</bean>
+
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+<!-- 	<bean id="viewNameTranslator" class="org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator" />
+ -->
+</beans>
